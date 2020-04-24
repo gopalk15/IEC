@@ -2,15 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from parameters import *
 
-
-
 # Physical Grid Dimensions
 R1 = 0.05            # Cathode [m]
 GEO_C = .95          # Geometric transparency cathode (manual for now)
 R2 = .085            # Anode [m]
 GEO_A = .95          # Geometric transparency anode   (manual for now)
 
-
+Ti = 0.1                    #ion velocity in eV (not used yet)
 #calculate plasma parameters
 #lD = np.sqrt(EPS0*Te/(n0*QE))      #Debye length (not used yet)
 vth = np.sqrt(2*QE*Ti/m_ion)        #Thermal velocity with Ti in eV (not used yet)
