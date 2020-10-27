@@ -28,3 +28,17 @@ class Config:
 class Domain(Config):
     def __init__(self):
         pass
+
+class Fusion:
+    def __init__(self):
+        pass 
+    
+    def get_potential(self):
+        pass 
+
+    def sample_source(self):
+        pass 
+    
+    def get_cross_section(self):
+        pass
+
