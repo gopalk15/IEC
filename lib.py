@@ -57,16 +57,16 @@ def nodal_position(lc,dx,dy):
 
 def sampleIsotropicVel(vth):
     #pick a random angle
-    theta = 2*math.pi*random()
+    theta = 2*np.pi*random()
     
     #pick a random direction for n[2]
     R = -1.0+2*random()
-    a = math.sqrt(1-R*R)
-    n = (math.cos(theta)*a, math.sin(theta)*a, R)
+    a = np.sqrt(1-R*R)
+    n = (np.cos(theta)*a, np.sin(theta)*a, R)
     
     #pick maxwellian velocities
-    vm = numpy.zeros(3)
-    vm[0:3] = math.sqrt(2)*vth*(2*(random()+random()+random()-1.5))
+    vm = np.zeros(2)
+    vm[0:2] = np.sqrt(2)*vth*(2*(random()+random()+random()-1.5))
     
-    vel = (n[0]*vm[0], n[1]*vm[1], n[2]*vm[2]) 
+    vel = (n[0]*vm[0], n[1]*vm[1]) 
     return vel

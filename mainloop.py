@@ -69,11 +69,12 @@ for step in range(timeStep):
     ''' 3. Compute Electric Field '''
     loop.get_electricField(PHI_G,dx,dy)
     print("calculated electric field")
-    ''' 4. Move Particles '''
+    
+    ''' 4. Generate Particles '''
 
 
 
-    ''' 5. Generate Particles '''
+    ''' 5. Move Particles '''
 
 
 

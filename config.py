@@ -1,6 +1,8 @@
 from lib import get_params,get_discrete_values 
 import numpy as np
 from lib import XtoL
+from random import random
+
 
 class Parameters: 
     #Inputs
@@ -99,11 +101,19 @@ class Particles(Parameters):
         self.nx,self.ny = nodes
         self.pos = np.zeros([Parameters.max_particles,2])
         self.vel = np.zeros([Parameters.max_particles,2])
-        self.insert = 400
+        self.insert = 400 #insert 2 ions per anode cell
     
     def get_specificWeight(self):
         specific_weight = (Parameters.Flux*Parameters.dt)/self.insert
         return specific_weight
+    
+    def generate_particles(self):
+
+        for _ in range(self.insert):
+            pass 
+        
+
+        
 
 
  
