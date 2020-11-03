@@ -4,12 +4,17 @@ import math
 import matplotlib.pyplot as plt 
 
 
-def get_params(section,variable):
+def get_params(section,variable,type=None):
     ''' Returns Paramenters Stored in .cfg file '''
     config = configparser.ConfigParser()
     config.read("simulation_parameters.cfg")
     config.sections()
-    return float(config[section][variable])
+    value = config[section][variable]
+
+    if type=='int':
+        return int(value)
+    else:
+        return float(value)
     
 
 def get_discrete_values(y, dy):

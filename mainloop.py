@@ -2,6 +2,7 @@ from config import Domain,Particles,ESPIC,Fusion
 import numpy as np
 from lib import get_params,plot_chamber,XtoL
 import matplotlib.pyplot as plt
+import time
 
 #Variable Inputs (for later)
 potential = -100000   # [V] cathode potential 
@@ -10,21 +11,69 @@ anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
 pressure = 7      # Pa (Not used yet)
 Te = np.abs(potential)    #electron temperature in eV
 
+#set timestep to 50
 
 ''' Initialise '''
 
 fusor = Domain()
-nodes = fusor.get_nodes()
+nx,ny = nodes = fusor.get_nodes()
 cathode = fusor.build_grid(cathode_radius)
 anode = fusor.build_grid(anode_radius)
+dx = fusor.dx
+dy = fusor.dy
 
-loop = ESPIC(cathode,anode,nodes,600,potential)
+loop = ESPIC(cathode,anode,nodes,10,potential)
 particles = Particles(nodes)
 fusion = Fusion()
 
 PHI_G = np.zeros(nodes)
 loop.build_potential_matrix(PHI_G)
+timeStep = loop.time_steps
 
+spec_wt = particles.get_specificWeight()
+
+for step in range(timeStep):
+    print(f"Begining Time Step {step}") # replace with logging
+
+    loop.DEN = np.zeros(nodes) # Number Density Matrix
+    loop.EFX = np.zeros(nodes) # Electric Field Matrix, x-component
+    loop.EFY = np.zeros(nodes) # Electric Field Matrix, y-component
+    CHG = np.zeros(nodes) # Charge Density Matrix
+    loop.counter = 0
+    
+    ''' 1. Compute Charge Density '''
+    for p in range(particles.count):
+        fi = (particles.pos[p, 0] + fusor.chamber_radius-dx)/dx    #real i index of particle's cell
+        i = np.floor(fi).astype(int)             #integral part
+        hx = fi - i                              #the remainder
+        fj = (particles.pos[p,1] + (fusor.chamber_height/2)-dx)/dx #real i index of particle's cell
+        j = np.floor(fj).astype(int)             #integral part
+        hy = fj - j                              #the remainder
+        
+        #interpolate charge to nodes
+        CHG[i, j] = CHG[i, j] + (1-hx)*(1-hy)
+        CHG[i+1, j] = CHG[i+1, j] + hx*(1-hy)
+        CHG[i, j+1] = CHG[i, j+1] + (1-hx)*hy
+        CHG[i+1, j+1] = CHG[i+1, j+1] + hx*hy
+
+    # Calculate Densisty 
+    loop.get_density(CHG,spec_wt,dx)
+
+        
+    ''' 2. Compute Electric Potential '''
+    PHI_G = loop.get_potential(PHI_G,Te,dx)
+    print("calculated potentional")
+
+
+
+    ''' 3. Compute Electric Field '''
+    loop.get_electricField(PHI_G,dx,dy)
+    print("calculated electric field")
+    ''' 4. Move Particles '''
+
+
+
+    ''' 5. Generate Particles '''
 
 
 
