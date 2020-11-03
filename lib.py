@@ -1,5 +1,6 @@
 import configparser
 import numpy as np
+import math
 import matplotlib.pyplot as plt 
 
 
@@ -18,11 +19,49 @@ def get_discrete_values(y, dy):
     index = np.round(actual)
     return index*dy
 
-def plot_domain(cathode,anode,chamber):
+def phi_matrix(cathode,anode,cathode_potential,anode_potenial,nx,ny):
+    cathode_index = np.unique(cathode, axis=1)
+    index_offset_x = np.round(nx/2).astype(int)
+    index_offset_y = np.round(ny/2).astype(int)
+
+    PHI = np.zeros([nx,ny])
+    PHI[cat2[0] + idx, cat2[1] + idy] = cathode_potential
+    PHI[xa_index + idx, ya_index + idy] = anode_potential
+
+
+def plot_chamber(cathode,anode,chamber):
     plt.plot(cathode[0],cathode[1])
     plt.plot(anode[0],anode[1])
     plt.scatter(chamber[0][0],chamber[0][1])
     plt.scatter(chamber[1][0],chamber[1][1])
     plt.scatter(chamber[2][0],chamber[2][1])
     plt.scatter(chamber[3][0],chamber[3][1])
+    plt.axes().set_aspect('equal', 'datalim')
     plt.show()
+
+
+def XtoL(position,dx,dy):
+    ''' Takes 2D dimentional postions of  '''
+    lc = [position[0]/dx,position[1]/dy]
+    return lc 
+
+def nodal_position(lc,dx,dy):
+    ''' Returns dimentional postions of nodes in meters'''
+    pos = [lc[0]*dx,lc[1]*dy]
+    return pos
+
+def sampleIsotropicVel(vth):
+    #pick a random angle
+    theta = 2*math.pi*random()
+    
+    #pick a random direction for n[2]
+    R = -1.0+2*random()
+    a = math.sqrt(1-R*R)
+    n = (math.cos(theta)*a, math.sin(theta)*a, R)
+    
+    #pick maxwellian velocities
+    vm = numpy.zeros(3)
+    vm[0:3] = math.sqrt(2)*vth*(2*(random()+random()+random()-1.5))
+    
+    vel = (n[0]*vm[0], n[1]*vm[1], n[2]*vm[2]) 
+    return vel

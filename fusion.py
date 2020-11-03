@@ -1,6 +1,5 @@
 
 
-
 #input settings
 n0 = 4.6e13                 #electron background density in #/m^3
 phi_Cathode = -100000        #cathode potential
@@ -213,6 +212,7 @@ for it in range(ts):
         F = QE*E      # Lorenz force F = qE
         a = F/m_ion   # Acceleration
         part_v[p,:] = part_v[p,:] + a*dt
+
         part_x[p,:] = part_x[p,:] + part_v[p,:]*dt
         #print(part_v[p,:])
         #print(part_x[p,:])
