@@ -1,1 +1,4 @@
-from IEC import config,lib 
+import sys 
+sys.path.insert(1,'C:\\Users\\gopal\\git\\IEC\\fusor')
+
+

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 def get_params(section,variable,type=None):
     ''' Returns Paramenters Stored in .cfg file '''
     config = configparser.ConfigParser()
-    config.read("simulation_parameters.cfg")
+    config.read("fusor\\simulation_parameters.cfg")
     config.sections()
     value = config[section][variable]
 
