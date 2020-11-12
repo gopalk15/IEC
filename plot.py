@@ -47,18 +47,18 @@ with h5py.File('TestData.h5','r') as hdf:
 
 
 
-x_data = position[:,0]
-y_data = position[:,1]
+# x_data = position[:,0]
+# y_data = position[:,1]
 
-xv_data = velocity[:,0]
-yv_data = velocity[:,1]
+# xv_data = velocity[:,0]
+# yv_data = velocity[:,1]
 
 
-plt.scatter(x_data,y_data)
+# plt.scatter(x_data,y_data)
 
-plt.figure(2)
-plt.scatter(xv_data,yv_data)
-plt.show()
-
-# plot_ion_density(DEN,fusor.chamber_radius,fusor.chamber_height)
+# plt.figure(2)
+# plt.scatter(xv_data,yv_data)
 # plt.show()
+
+plot_ion_density(DEN,fusor.chamber_radius,fusor.chamber_height)
+plt.show()

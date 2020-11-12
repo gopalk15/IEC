@@ -46,16 +46,6 @@ def plot_chamber(cathode,anode,chamber):
     plt.show()
 
 
-def XtoL(position,dx,dy):
-    ''' Takes 2D dimentional postions of  '''
-    lc = [position[0]/dx,position[1]/dy]
-    return lc 
-
-def nodal_position(lc,dx,dy):
-    ''' Returns dimentional postions of nodes in meters'''
-    pos = [lc[0]*dx,lc[1]*dy]
-    return pos
-
 def sampleIsotropicVel(vth):
     #pick a random angle
     theta = 2*np.pi*random()
@@ -93,10 +83,6 @@ def fusion_cross_section(vx, vy,massIon):
     sig1 = term1/term2
     sig2 = term3/term4
     return sig1 + sig2
-
-def kill_particle(array,index_a,index_b):
-    array[[index_a,index_b]] = array[[index_b,index_a]]
-    array[[index_b]] = np.array([0,0])
 
 def plot_ion_density(density,chamber_radius,chamber_height):
     PHI_B2 = density.T

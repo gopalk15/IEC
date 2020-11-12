@@ -1,10 +1,10 @@
 from config import Domain,Particles,ESPIC,Fusion
-from lib import get_params,kill_particle
+from lib import get_params
 import logging
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
-import time
+from time import perf_counter
 
 ''' Setup Logger '''
 logger = logging.getLogger(__name__)
@@ -17,7 +17,6 @@ logging.basicConfig(level=logging.DEBUG, format='%(name)s :: %(message)s')
 potential = -100000   # [V] cathode potential 
 cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
 anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
-pressure = 7      # Pa (Not used yet)
 Te = np.abs(potential)    #electron temperature in eV
 
 #set timestep to 50
@@ -31,7 +30,7 @@ anode = fusor.build_grid(anode_radius)
 dx = fusor.dx
 dy = fusor.dy
 
-loop = ESPIC(cathode,anode,nodes,10,potential)
+loop = ESPIC(cathode,anode,nodes,600,potential)
 particles = Particles(nodes)
 spray_radius,spray_angle = particles.get_spray_values()
 fusion = Fusion()
@@ -42,6 +41,7 @@ timeStep = loop.time_steps
 
 spec_wt = particles.get_specificWeight()
 
+start = perf_counter()
 for step in range(timeStep):
     logger.info(f"""
                 Begining Time Step # {step} 
@@ -53,6 +53,7 @@ for step in range(timeStep):
     loop.EFY = np.zeros(nodes) # Electric Field Matrix, y-component
     CHG = np.zeros(nodes) # Charge Density Matrix
     loop.counter = 0
+    particles.lost = 0
     
     ''' 1. Compute Charge Density '''
     for p in range(particles.count):
@@ -169,7 +170,8 @@ for step in range(timeStep):
                     Net Charge: {particles.insert - particles.lost}
                     Particles lost: {particles.lost}
                  """)
-    
+
+
 with h5py.File('TestData.h5','w') as hdf:
     G2 = hdf.create_group('Data')
     G2.create_dataset('ParticlePosition',data=particles.pos)
@@ -177,6 +179,7 @@ with h5py.File('TestData.h5','w') as hdf:
     G2.create_dataset('Density',data=loop.DEN)
     G2.create_dataset('electricFieldx',data=loop.EFX)
     G2.create_dataset('electricFieldy',data=loop.EFY)
+    G2.create_dataset('Potential',data=PHI_G)
 
     
     G1 = hdf.create_group('Data/Fusion')
@@ -184,7 +187,9 @@ with h5py.File('TestData.h5','w') as hdf:
     G1.create_dataset('yPosition',data=fusion.y_position)
     G1.create_dataset('Time',data = fusion.time)
 
+end = perf_counter() 
 
+logger.info(f'Completed in {round(end-start)} second(s) ')
    
 
 

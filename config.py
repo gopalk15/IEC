@@ -1,6 +1,5 @@
 from lib import get_params,get_discrete_values,sampleIsotropicVel,fusion_cross_section 
 import numpy as np
-from lib import XtoL
 from random import (random,uniform)
 
 
@@ -17,6 +16,7 @@ class Parameters:
     Flux = 4.6e20 # Flux of ions entering [ions per second]
     marcoCharge = 1 #macroparticle charge
 
+
     # Physical Grid Dimensions
     cathode_gt = get_params('Grid','Cathode_gt')   # Geometric transparency cathode (manual for now)
     anode_gt = get_params('Grid','Anode_gt')       # Geometric transparency anode   (manual for now)
@@ -25,6 +25,7 @@ class Parameters:
     chamber_radius = get_params('Chamber','Radius')      # [m]
     chamber_height = get_params('Chamber', 'Height')     # [m]
     wire_radius = get_params('Chamber','wireRadius')/2 # Radius of 20 guage wire in m
+    chamber_pressure = get_params('Chamber','Pressure') #[Pa]
 
     #Source Dimension
     source_radius = get_params('Source','R')
@@ -36,8 +37,7 @@ class Parameters:
     vth = np.sqrt(2*QE*Ti/massIon)   #thermal velocity with Ti in eV
     
     #calculate plasma parameters
-    #lD = np.sqrt(EPS0*Te/(n0*QE))      #Debye length (not used yet)
-    vth = np.sqrt(2*QE*Ti/massIon)        #Thermal velocity with Ti in eV (not used yet)
+    #debye_length = np.sqrt(EPS0*Te/(n0*QE))      #Debye length (not used yet)
     debye_length = 0.004   # [m] MANUAL SETTING FOR TESTING
     dt = 1e-10 # time step size, at vmax move 0.1dx
   
@@ -116,27 +116,6 @@ class Particles(Parameters):
         return (radius,angle)
 
     def generate(self,radius,angle):
-        # xv = np.zeros([self.insert])
-        # yv = np.zeros([self.insert])
-        # for i in range(self.insert):
-        #     theta = np.random.rand(1)*2*np.pi   # Generate random polar angle
-        #     x = self.source_radius*np.cos(theta)                # Get x position
-        #     y = self.source_radius*np.sin(theta)                # Get y position
-        #     xv[i] = x
-        #     yv[i] = y
-
-        # self.pos[self.count:self.count+self.insert,0] = xv
-        # self.pos[self.count:self.count+self.insert,0] = yv
-
-        # pt1 = np.random.rand(self.insert)
-        # pt2 = np.random.rand(self.insert)
-        # pt3 = np.random.rand(self.insert)
-        # pt11 = np.random.rand(self.insert)
-        # pt12 = np.random.rand(self.insert)
-        # pt13 = np.random.rand(self.insert)
-        # self.vel[self.count:self.count+self.insert,0] = (-1.5 + pt1 + pt2 + pt3)*self.vth     # x velocity
-        # self.vel[self.count:self.count+self.insert,1] = (-1.5 + pt11 + pt12 + pt13)*self.vth  # y velcoity
-
 
         for i in range(self.insert):
             theta = uniform(-angle,angle) - np.pi/2
