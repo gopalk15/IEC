@@ -1,13 +1,14 @@
 import configparser
 import numpy as np
 import math
+from random import random
 import matplotlib.pyplot as plt 
 
 
 def get_params(section,variable,type=None):
     ''' Returns Paramenters Stored in .cfg file '''
     config = configparser.ConfigParser()
-    config.read("fusor\\simulation_parameters.cfg")
+    config.read("C:\\Users\\gopal\\git\\IEC\\simulation_parameters.cfg")
     config.sections()
     value = config[section][variable]
 
@@ -70,3 +71,25 @@ def sampleIsotropicVel(vth):
     
     vel = (n[0]*vm[0], n[1]*vm[1]) 
     return vel
+
+def fusion_cross_section(vx, vy):
+    # Takes in velocity componants in m/s and returns a cross section in barns
+    E = .5*m_ion*(vx**2 + vy**2)
+    E = E*6.242e15  # convert J to KeV 
+    A1 = 46.097
+    A2 = 372
+    A3 = 4.36e-4
+    A4 = 1.22
+    A5 = 0
+    AA1 = 47.88
+    AA2 = 482
+    AA3 = 3.08e-4
+    AA4 = 1.177
+    AA5 = 0
+    term1 = A5 + A2/((A4 - A3*E)**2 + 1)
+    term2 = E*(np.exp(A1/np.sqrt(E)) - 1)
+    term3 = AA5 + AA2/((AA4 - AA3*E)**2 + 1)
+    term4 = E*(np.exp(AA1/np.sqrt(E)) - 1)
+    sig1 = term1/term2
+    sig2 = term3/term4
+    return sig1 + sig2

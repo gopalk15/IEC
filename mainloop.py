@@ -1,8 +1,16 @@
 from config import Domain,Particles,ESPIC,Fusion
-import numpy as np
 from lib import get_params,plot_chamber,XtoL
+import logging
+import numpy as np
 import matplotlib.pyplot as plt
 import time
+
+''' Setup Logger '''
+logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
+
+# formatter = logging.Formatter('%(name)s :: %(process)d :: %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(name)s :: %(message)s')
 
 #Variable Inputs (for later)
 potential = -100000   # [V] cathode potential 
@@ -24,6 +32,7 @@ dy = fusor.dy
 
 loop = ESPIC(cathode,anode,nodes,10,potential)
 particles = Particles(nodes)
+spray_radius,spray_angle = particles.get_spray_values()
 fusion = Fusion()
 
 PHI_G = np.zeros(nodes)
@@ -33,8 +42,11 @@ timeStep = loop.time_steps
 spec_wt = particles.get_specificWeight()
 
 for step in range(timeStep):
-    print(f"Begining Time Step {step}") # replace with logging
-
+    logger.info(f"""
+                Begining Time Step # {step} 
+                Particle Count: {particles.count}
+                    """)
+    
     loop.DEN = np.zeros(nodes) # Number Density Matrix
     loop.EFX = np.zeros(nodes) # Electric Field Matrix, x-component
     loop.EFY = np.zeros(nodes) # Electric Field Matrix, y-component
@@ -44,10 +56,10 @@ for step in range(timeStep):
     ''' 1. Compute Charge Density '''
     for p in range(particles.count):
         fi = (particles.pos[p, 0] + fusor.chamber_radius-dx)/dx    #real i index of particle's cell
-        i = np.floor(fi).astype(int)             #integral part
+        i = np.floor(fi).astype(int)           #integral part
         hx = fi - i                              #the remainder
         fj = (particles.pos[p,1] + (fusor.chamber_height/2)-dx)/dx #real i index of particle's cell
-        j = np.floor(fj).astype(int)             #integral part
+        j = np.floor(fj).astype(int)              #integral part
         hy = fj - j                              #the remainder
         
         #interpolate charge to nodes
@@ -62,19 +74,45 @@ for step in range(timeStep):
         
     ''' 2. Compute Electric Potential '''
     PHI_G = loop.get_potential(PHI_G,Te,dx)
-    print("calculated potentional")
+    logger.info("Computed Electric Potential")
 
 
 
     ''' 3. Compute Electric Field '''
+    logger.info('Computing Electric Field')
     loop.get_electricField(PHI_G,dx,dy)
-    print("calculated electric field")
+    
     
     ''' 4. Generate Particles '''
-
+    logger.info('Injecting Particles')
+    particles.generate(spray_radius,spray_angle)
+    
 
 
     ''' 5. Move Particles '''
+    logger.info("Moving Particles")
+    m = 0 # Particle index
+
+    while m < particles.count:
+        i,j,hx,hy = particles.get_index(m,dx)
+
+        E_field = loop.gather_electricField(i,j,hx,hy)
+
+        F = fusor.QE*E_field
+        a = F/fusor.massIon
+        particles.vel[m,:] = particles.vel[m,:] + a*loop.dt
+        particles.pos[m,:] = particles.pos[m,:] + particles.vel[m,:]*loop.dt
+
+    
+        rho = loop.gather_density(i,j,hx,hy)
+        fusion_prob = particles.get_fusion_prob(m,rho,spec_wt)
+
+      
+
+
+
+        
+
 
 
 

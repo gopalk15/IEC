@@ -1,7 +1,7 @@
-from lib import get_params,get_discrete_values 
+from lib import get_params,get_discrete_values,sampleIsotropicVel,fusion_cross_section 
 import numpy as np
 from lib import XtoL
-from random import random
+from random import (random,uniform)
 
 
 class Parameters: 
@@ -107,10 +107,48 @@ class Particles(Parameters):
         specific_weight = (Parameters.Flux*Parameters.dt)/self.insert
         return specific_weight
     
-    def generate_particles(self):
+    def get_spray_values(self):
+        ''' Returns values for spray arch'''
+        angle = np.tan((2/3)*self.chamber_radius/self.chamber_height)
+        radius = np.sqrt((self.chamber_radius**2) + (self.chamber_height**2))
 
-        for _ in range(self.insert):
-            pass 
+        return (radius,angle)
+
+    def generate(self,radius,angle):
+
+        for i in range(self.insert):
+            theta = uniform(-angle,angle) - np.pi/2
+            distance = random()*radius
+            self.pos[i + self.count,0] = distance*np.cos(theta)
+            self.pos[i + self.count,1] = distance*np.sin(theta) + self.chamber_height
+            self.vel[i + self.count,0],self.vel[i+self.count,1] = sampleIsotropicVel(300)
+
+        self.count = self.count + self.insert
+    
+    def get_index(self,index,dh):
+        fi = (self.pos[index, 0] + self.chamber_radius-dh)/dh    #real i index of particle's cell
+        i = np.floor(fi).astype(int)           #integral part
+        hx = fi - i                              #the remainder
+        fj = (self.pos[index,1] + (self.chamber_height/2)-dh)/dh #real i index of particle's cell
+        j = np.floor(fj).astype(int)              #integral part
+        hy = fj - j 
+
+        return np.array([i,j,hx,hy])
+
+    def get_fusion_prob(self,index,density,specific_weight):
+        vx = self.vel[index,0]
+        vy = self.vel[index,1]
+        del_vx = vx*self.dt
+        del_vy = vy*self.dt
+        path_length = np.sqrt(del_vx**2 + del_vy**2)
+        sigma = fusion_cross_section(vx,vy)
+        probability = density*sigma*path_length*specific_weight
+
+        return probability
+
+
+
+    
         
 
         
@@ -170,11 +208,29 @@ class ESPIC(Parameters):
         self.DEN[:,self.ny-1] = 2*self.DEN[:,self.ny-1]
         self.DEN = self.DEN + 1e3                    # Add self.DENsity floor to help the solver
 
-    def sample_source(self):
-        pass 
     
-    def get_cross_section(self):
-        pass
+    def gather_electricField(self,i,j,hx,hy):
+
+        E = np.array([self.EFX[i,j],self.EFY[i,j]])*(1-hx)*(1-hy)
+        E = E + np.array([self.EFX[i+1,j], self.EFY[i+1,j]])*hx*(1-hy)            #(i+1,j)
+        E = E + np.array([self.EFX[i,j+1], self.EFY[i,j+1]])*(1-hx)*hy            #(i,j+1)
+        E = E + np.array([self.EFX[i+1,j+1], self.EFY[i+1,j+1]])*hx*hy
+
+        return E
+
+    def gather_density(self,i,j,hx,hy):
+        rho = self.DEN[i,j]*(1-hx)*(1-hy)
+        rho = rho + self.DEN[i+1,j]*hx*(1-hy)
+        rho = rho + self.DEN[i,j+1]*(1-hx)*hy
+        rho = rho + self.DEN[i+1,j+1]*hx*hy
+        return rho
+    
+
+
+
+
+           
+
     
 
     
