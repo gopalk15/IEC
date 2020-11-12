@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(1,'C:\\Users\\gopal\\git\\IEC\\fusor')
+sys.path.insert(1,'C:\\Users\\gopal\\git\\IEC')
 
 from config import Domain,Particles 
 import numpy as np
@@ -32,7 +32,7 @@ PHI_BV2 = cube.T
 xsh = PHI_BV2.shape[1]
 ysh = PHI_BV2.shape[0]
 xv = np.linspace(-fusor.chamber_radius, fusor.chamber_radius, xsh) 
-yv = np.linspace(0, fusor.chamber_height, ysh)
+yv = np.linspace(-fusor.chamber_height/2,fusor.chamber_height/2, ysh)
 X, Y = np.meshgrid(xv, yv)
 plt.pcolormesh(X, Y, PHI_BV2, cmap='seismic',shading='auto')
 plt.axis('equal')
@@ -51,7 +51,10 @@ particles = Particles(nodes)
 
 radius,angle = particles.get_spray_values()
 
-x_part,y_part = particles.generate_particles(radius,angle)
+particles.generate(radius,angle)
+
+x_part = particles.pos[:,0]
+y_part = particles.pos[:,1]
 
 plt.scatter(x_part,y_part)
 

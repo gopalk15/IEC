@@ -1,7 +1,8 @@
 from config import Domain,Particles,ESPIC,Fusion
-from lib import get_params,plot_chamber,XtoL
+from lib import get_params,kill_particle
 import logging
 import numpy as np
+import h5py
 import matplotlib.pyplot as plt
 import time
 
@@ -86,16 +87,19 @@ for step in range(timeStep):
     ''' 4. Generate Particles '''
     logger.info('Injecting Particles')
     particles.generate(spray_radius,spray_angle)
-    
 
-
+   
     ''' 5. Move Particles '''
     logger.info("Moving Particles")
     m = 0 # Particle index
 
     while m < particles.count:
         i,j,hx,hy = particles.get_index(m,dx)
+       
+        i = int(i)
+        j = int(j)
 
+  
         E_field = loop.gather_electricField(i,j,hx,hy)
 
         F = fusor.QE*E_field
@@ -106,6 +110,99 @@ for step in range(timeStep):
     
         rho = loop.gather_density(i,j,hx,hy)
         fusion_prob = particles.get_fusion_prob(m,rho,spec_wt)
+        fusion_chance = np.random.rand(1)
+        radial_distance = np.sqrt(particles.pos[m,0]**2 + particles.pos[m,1]**2)
+
+        # Top Wall 
+        if particles.pos[m,1] > fusor.chamber_height/2:
+            particles.kill(m)  
+            m += -1 
+            fusor.top_counter += 1
+        
+        #Bottom Wall
+        elif particles.pos[m,1] < -fusor.chamber_height/2:
+            particles.kill(m)
+            m += -1 
+            fusor.bottom_counter += 1
+        
+        #Left Wall
+        elif particles.pos[m,0] < -fusor.chamber_radius:
+            particles.kill(m)
+            m += -1
+            fusor.left_counter += 1
+
+        #Right Wall 
+        elif particles.pos[m,0] > fusor.chamber_radius:
+            particles.kill(m)
+            m += -1
+            fusor.right_counter += 1
+        
+       
+        #Anode 
+        elif (radial_distance < anode_radius + fusor.wire_radius) and (radial_distance > anode_radius - fusor.wire_radius):
+            prob = np.random.rand(1)
+            if prob > fusor.anode_gt:
+                particles.kill(m)
+                m += -1 
+                fusor.anode_counter += 1
+        
+        #Cathode
+        elif (radial_distance < cathode_radius + fusor.wire_radius) and (radial_distance > cathode_radius - fusor.wire_radius):
+            prob = np.random.rand(1)
+            if prob > fusor.cathode_gt:
+                particles.kill(m)
+                m += -1 
+                fusor.cathode_counter += 1
+        
+        #Check Fusion
+        elif fusion_chance <= fusion_prob:
+            x,y = particles.pos[m,:]
+            time = step*fusor.dt
+            fusion.occured(x,y,time)
+            particles.kill(m)
+            m += -1 
+        
+        m += 1   # move onto next particle
+
+    logger.info('Finshed moving Particles')
+    logger.info(f"""
+                    Net Charge: {particles.insert - particles.lost}
+                    Particles lost: {particles.lost}
+                 """)
+    
+with h5py.File('TestData.h5','w') as hdf:
+    G2 = hdf.create_group('Data')
+    G2.create_dataset('ParticlePosition',data=particles.pos)
+    G2.create_dataset('ParticleVelocity', data=particles.vel)
+    G2.create_dataset('Density',data=loop.DEN)
+    G2.create_dataset('electricFieldx',data=loop.EFX)
+    G2.create_dataset('electricFieldy',data=loop.EFY)
+
+    
+    G1 = hdf.create_group('Data/Fusion')
+    G1.create_dataset('xPosition',data=fusion.x_position)
+    G1.create_dataset('yPosition',data=fusion.y_position)
+    G1.create_dataset('Time',data = fusion.time)
+
+
+   
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
 
       
 

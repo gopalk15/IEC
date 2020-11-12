@@ -98,6 +98,7 @@ class Particles(Parameters):
     def __init__(self,nodes):
         self.cell = Parameters.debye_length
         self.count = 0 #Number of particles
+        self.lost = 0 # Number of Particles lost
         self.nx,self.ny = nodes
         self.pos = np.zeros([Parameters.max_particles,2])
         self.vel = np.zeros([Parameters.max_particles,2])
@@ -110,27 +111,50 @@ class Particles(Parameters):
     def get_spray_values(self):
         ''' Returns values for spray arch'''
         angle = np.tan((2/3)*self.chamber_radius/self.chamber_height)
-        radius = np.sqrt((self.chamber_radius**2) + (self.chamber_height**2))
+        radius = np.sqrt((self.chamber_radius**2) + (self.chamber_height**2)) - 0.2
 
         return (radius,angle)
 
     def generate(self,radius,angle):
+        # xv = np.zeros([self.insert])
+        # yv = np.zeros([self.insert])
+        # for i in range(self.insert):
+        #     theta = np.random.rand(1)*2*np.pi   # Generate random polar angle
+        #     x = self.source_radius*np.cos(theta)                # Get x position
+        #     y = self.source_radius*np.sin(theta)                # Get y position
+        #     xv[i] = x
+        #     yv[i] = y
+
+        # self.pos[self.count:self.count+self.insert,0] = xv
+        # self.pos[self.count:self.count+self.insert,0] = yv
+
+        # pt1 = np.random.rand(self.insert)
+        # pt2 = np.random.rand(self.insert)
+        # pt3 = np.random.rand(self.insert)
+        # pt11 = np.random.rand(self.insert)
+        # pt12 = np.random.rand(self.insert)
+        # pt13 = np.random.rand(self.insert)
+        # self.vel[self.count:self.count+self.insert,0] = (-1.5 + pt1 + pt2 + pt3)*self.vth     # x velocity
+        # self.vel[self.count:self.count+self.insert,1] = (-1.5 + pt11 + pt12 + pt13)*self.vth  # y velcoity
+
 
         for i in range(self.insert):
             theta = uniform(-angle,angle) - np.pi/2
-            distance = random()*radius
+            distance = uniform(0.17,0.3)
+            
             self.pos[i + self.count,0] = distance*np.cos(theta)
-            self.pos[i + self.count,1] = distance*np.sin(theta) + self.chamber_height
-            self.vel[i + self.count,0],self.vel[i+self.count,1] = sampleIsotropicVel(300)
+            self.pos[i + self.count,1] = distance*np.sin(theta) + (self.chamber_height/2 - 0.01)
+            self.vel[i + self.count,0],self.vel[i+self.count,1] = sampleIsotropicVel(self.vth)
 
-        self.count = self.count + self.insert
+        self.count += self.insert
+
     
     def get_index(self,index,dh):
         fi = (self.pos[index, 0] + self.chamber_radius-dh)/dh    #real i index of particle's cell
-        i = np.floor(fi).astype(int)           #integral part
+        i = np.floor(fi)          #integral part
         hx = fi - i                              #the remainder
         fj = (self.pos[index,1] + (self.chamber_height/2)-dh)/dh #real i index of particle's cell
-        j = np.floor(fj).astype(int)              #integral part
+        j = np.floor(fj)              #integral part
         hy = fj - j 
 
         return np.array([i,j,hx,hy])
@@ -141,18 +165,19 @@ class Particles(Parameters):
         del_vx = vx*self.dt
         del_vy = vy*self.dt
         path_length = np.sqrt(del_vx**2 + del_vy**2)
-        sigma = fusion_cross_section(vx,vy)
+        sigma = fusion_cross_section(vx,vy,self.massIon)
         probability = density*sigma*path_length*specific_weight
 
         return probability
-
-
-
     
-        
-
-        
-
+    def kill(self,index):
+        self.pos[[index,self.count-1]] = self.pos[[self.count-1,index]]
+        self.vel[[index,self.count-1]] = self.vel[[self.count -1 ,index]]
+        #Rest last particle to 0
+        self.pos[[self.count -1]] = np.array([0,0])
+        self.vel[[self.count-1]] = np.array([0,0])
+        self.count += -1
+        self.lost += 1
 
  
 class ESPIC(Parameters):
@@ -225,15 +250,6 @@ class ESPIC(Parameters):
         rho = rho + self.DEN[i+1,j+1]*hx*hy
         return rho
     
-
-
-
-
-           
-
-    
-
-    
 class Fusion(Parameters):
     
     def __init__(self):
@@ -241,4 +257,10 @@ class Fusion(Parameters):
         self.x_position = np.array([])
         self.y_position = np.array([])
         self.time = np.array([])
+    
+    def occured(self,x,y,time):
+        np.append(self.x_position,x)
+        np.append(self.y_position,y)
+        np.append(self.time,time)
+        self.counter += 1
     

@@ -72,9 +72,9 @@ def sampleIsotropicVel(vth):
     vel = (n[0]*vm[0], n[1]*vm[1]) 
     return vel
 
-def fusion_cross_section(vx, vy):
+def fusion_cross_section(vx, vy,massIon):
     # Takes in velocity componants in m/s and returns a cross section in barns
-    E = .5*m_ion*(vx**2 + vy**2)
+    E = .5*massIon*(vx**2 + vy**2)
     E = E*6.242e15  # convert J to KeV 
     A1 = 46.097
     A2 = 372
@@ -93,3 +93,23 @@ def fusion_cross_section(vx, vy):
     sig1 = term1/term2
     sig2 = term3/term4
     return sig1 + sig2
+
+def kill_particle(array,index_a,index_b):
+    array[[index_a,index_b]] = array[[index_b,index_a]]
+    array[[index_b]] = np.array([0,0])
+
+def plot_ion_density(density,chamber_radius,chamber_height):
+    PHI_B2 = density.T
+    xsh = PHI_B2.shape[1]
+    ysh = PHI_B2.shape[0]
+    xv = np.linspace(-chamber_radius, chamber_radius, xsh) 
+    yv = np.linspace(0, chamber_height, ysh)
+    X, Y = np.meshgrid(xv, yv)
+    plt.contourf(X, Y, PHI_B2, levels=60, cmap='inferno')
+    #plt.pcolor(X, Y, PHI_B2, cmap='inferno')
+    plt.colorbar()
+    plt.axis('equal')
+    print(PHI_B2.shape)
+    plt.xlabel('Radial Direction [m]')
+    plt.ylabel('Height [m]')
+    plt.title('Ion Number Density')
