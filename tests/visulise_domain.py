@@ -3,7 +3,7 @@ sys.path.insert(1,'C:\\Users\\gopal\\git\\IEC')
 
 from config import Domain,Particles 
 import numpy as np
-from lib import get_params,plot_chamber,XtoL
+from lib import get_params,plot_chamber
 import matplotlib.pyplot as plt
 
 
@@ -51,7 +51,7 @@ particles = Particles(nodes)
 
 radius,angle = particles.get_spray_values()
 
-particles.generate(radius,angle)
+particles.generate(radius,np.pi/6)
 
 x_part = particles.pos[:,0]
 y_part = particles.pos[:,1]

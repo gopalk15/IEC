@@ -80,9 +80,8 @@ def fusion_cross_section(vx, vy,massIon):
     term2 = E*(np.exp(A1/np.sqrt(E)) - 1)
     term3 = AA5 + AA2/((AA4 - AA3*E)**2 + 1)
     term4 = E*(np.exp(AA1/np.sqrt(E)) - 1)
-    sig1 = term1/term2
-    sig2 = term3/term4
-    return sig1 + sig2
+    cs = ((term1/term2) + (term3/term4))*1e-28
+    return cs
 
 def plot_ion_density(density,chamber_radius,chamber_height):
     PHI_B2 = density.T

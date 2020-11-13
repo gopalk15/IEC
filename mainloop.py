@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
 
 # formatter = logging.Formatter('%(name)s :: %(process)d :: %(message)s')
-logging.basicConfig(level=logging.DEBUG, format='%(name)s :: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(name)s :: %(message)s')
 
 #Variable Inputs (for later)
 potential = -100000   # [V] cathode potential 
@@ -19,7 +19,6 @@ cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
 anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
 Te = np.abs(potential)    #electron temperature in eV
 
-#set timestep to 50
 
 ''' Initialise '''
 
@@ -42,7 +41,8 @@ timeStep = loop.time_steps
 spec_wt = particles.get_specificWeight()
 
 start = perf_counter()
-for step in range(timeStep):
+simulation = 2
+for step in range(0,timeStep):
     logger.info(f"""
                 Begining Time Step # {step} 
                 Particle Count: {particles.count}
@@ -54,6 +54,7 @@ for step in range(timeStep):
     CHG = np.zeros(nodes) # Charge Density Matrix
     loop.counter = 0
     particles.lost = 0
+    fusion.counter = 0
     
     ''' 1. Compute Charge Density '''
     for p in range(particles.count):
@@ -111,7 +112,9 @@ for step in range(timeStep):
     
         rho = loop.gather_density(i,j,hx,hy)
         fusion_prob = particles.get_fusion_prob(m,rho,spec_wt)
-        fusion_chance = np.random.rand(1)
+        fusion_chance = np.random.rand(1)*fusion_prob
+        logging.debug(f"Fusion Probability: {fusion_prob}")
+        logging.debug(f"Fusion Chance: {fusion_chance}")
         radial_distance = np.sqrt(particles.pos[m,0]**2 + particles.pos[m,1]**2)
 
         # Top Wall 
@@ -156,36 +159,43 @@ for step in range(timeStep):
                 fusor.cathode_counter += 1
         
         #Check Fusion
-        elif fusion_chance <= fusion_prob:
-            x,y = particles.pos[m,:]
-            time = step*fusor.dt
-            fusion.occured(x,y,time)
+        elif fusion_chance[0] >= fusion_prob:
+            fuse_position = particles.pos[[m]]
+            fusion.occured(fuse_position[0])
             particles.kill(m)
             m += -1 
         
-        m += 1   # move onto next particle
+        m += 1                                      # move onto next particle
+    
+    #Get Fusion data
+    fusion.rate_data.append([fusion.counter,step*fusor.dt])
 
     logger.info('Finshed moving Particles')
     logger.info(f"""
                     Net Charge: {particles.insert - particles.lost}
                     Particles lost: {particles.lost}
+                    Fusion Events / dt: {fusion.counter}
+                    Total Fusion Events: {fusion.events}
                  """)
 
 
-with h5py.File('TestData.h5','w') as hdf:
-    G2 = hdf.create_group('Data')
-    G2.create_dataset('ParticlePosition',data=particles.pos)
-    G2.create_dataset('ParticleVelocity', data=particles.vel)
-    G2.create_dataset('Density',data=loop.DEN)
-    G2.create_dataset('electricFieldx',data=loop.EFX)
-    G2.create_dataset('electricFieldy',data=loop.EFY)
-    G2.create_dataset('Potential',data=PHI_G)
+with h5py.File('TestData2.h5','w') as hdf:
+    G2 = hdf.create_group(f"DataSets/potential/set{simulation}")
+    dataset1 = G2.create_dataset('ParticlePosition',data=particles.pos)
+    dataset2 = G2.create_dataset('ParticleVelocity', data=particles.vel)
+    dataset3 = G2.create_dataset('Density',data=loop.DEN)
+    dataset4 = G2.create_dataset('electricFieldx',data=loop.EFX)
+    dataset5 = G2.create_dataset('electricFieldy',data=loop.EFY)
+    dataset6 = G2.create_dataset('PHI',data=PHI_G) 
+    
+    G1 = hdf.create_group(f"DataSets/potential/set{simulation}/fusion")
+    dataset7 = G1.create_dataset('Position',data=fusion.position)
+    dataset9 = G1.create_dataset('RateData',data = fusion.rate_data)
+    dataset10 = G1.create_dataset('FusionCount',data = fusion.counter)
+
+    dataset6.attrs['Potential'] = f'{potential} V'
 
     
-    G1 = hdf.create_group('Data/Fusion')
-    G1.create_dataset('xPosition',data=fusion.x_position)
-    G1.create_dataset('yPosition',data=fusion.y_position)
-    G1.create_dataset('Time',data = fusion.time)
 
 end = perf_counter() 
 
@@ -193,145 +203,5 @@ logger.info(f'Completed in {round(end-start)} second(s) ')
    
 
 
-
-
-
-
-
-
-
-            
-
-
-
-
-
-
-
-
-      
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-''' Visulize compuational domian '''
-# PHI_BV = np.ones([nx, ny])*-2
-# idx = np.round(nx/2).astype(int)
-# idy = np.round(ny/2).astype(int)
-# PHI_BV[cat2[0] + idx, cat2[1] + idy] = 20
-# PHI_BV[xa_index + idx, ya_index + idy] = -20
-# PHI_BV2 = PHI_BV.T
-# xsh = PHI_BV2.shape[1]
-# ysh = PHI_BV2.shape[0]
-# xv = np.linspace(-fusor.chamber_radius, fusor.chamber_radius, xsh) 
-# yv = np.linspace(0, fusor.chamber_height, ysh)
-# X, Y = np.meshgrid(xv, yv)
-# plt.pcolor(X, Y, PHI_BV2, cmap='seismic')
-# plt.axis('equal')
-# plt.xlabel('Radial Direction [m]')
-# plt.ylabel('Height [m]')
-# plt.title('Computational Domain')
-# plt.show()
-
-
-
-
-
-
-
-
-# ind_x = (cathode[0]/fusor.dx).astype(int) 
-# ind_y = (cathode[1]/fusor.dy).astype(int) 
-
-# an_x = (anode[0]/fusor.dx).astype(int)
-# an_y = (anode[1]/fusor.dy).astype(int)
-
-# print(ind_x)
-# print(len(ind_x))
-# # # Deleate repeate XY Pairs
-# Cathode_Id1 = np.zeros([2, len(ind_x)])
-# Cathode_Id1[0, :] = ind_x
-# Cathode_Id1[1, :] = ind_y
-# Cathode_Id2 = np.unique(Cathode_Id1, axis=1)
-# ind_x = Cathode_Id2[0, :].astype(int)
-# ind_y = Cathode_Id2[1, :].astype(int)
-
-# print(len(ind_y))
-# Anode_Id1 = np.zeros([2, len(an_x)])
-# Anode_Id1[0, :] = an_x
-# Anode_Id1[1, :] = an_y
-# Anode_Id2 = np.unique(Cathode_Id1, axis=1)
-# an_x = Anode_Id2[0, :].astype(int)
-# an_y = Anode_Id2[1, :].astype(int)
-
-
-# cube = np.ones([nx,ny])*-2
-# idx = np.round(nx/2).astype(int)
-# idy = np.round(ny/2).astype(int)
-# cube[ind_x + 35 ,ind_y + 35 ] = 20
-# cube[an_x + 15 ,an_y + 25] = -20
-# PHI_BV2 = cube.T
-# xsh = PHI_BV2.shape[1]
-# ysh = PHI_BV2.shape[0]
-# xv = np.linspace(-fusor.chamber_radius, fusor.chamber_radius, xsh) 
-# yv = np.linspace(0, fusor.chamber_height, ysh)
-# X, Y = np.meshgrid(xv, yv)
-# plt.pcolormesh(X, Y, PHI_BV2, cmap='seismic',shading='auto')
-# plt.axis('equal')
-# plt.xlabel('Radial Direction [m]')
-# plt.ylabel('Height [m]')
-# plt.title('Computational Domain')
-# plt.show()
-
-
-
-
-
-
-
-
-
-# ''' Visulize compuational domian '''
-# PHI_BV = np.ones([nx, ny])*-2
-# idx = np.round(nx/2).astype(int)
-# idy = np.round(ny/2).astype(int)
-# PHI_BV[i_cat_x + idx, i_cat_y + idy] = 20
-# PHI_BV[i_an_x + idx, i_an_y + idy] = -20
-# PHI_BV2 = PHI_BV.T
-# xsh = PHI_BV2.shape[1]
-# ysh = PHI_BV2.shape[0]
-# xv = np.linspace(-fusor.chamber_radius, fusor.chamber_radius, xsh) 
-# yv = np.linspace(0, fusor.chamber_height, ysh)
-# X, Y = np.meshgrid(xv, yv)
-# plt.pcolor(X, Y, PHI_BV2, cmap='seismic')
-# plt.axis('equal')
-# plt.xlabel('Radial Direction [m]')
-# plt.ylabel('Height [m]')
-# plt.title('Computational Domain')
 
 
