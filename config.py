@@ -1,11 +1,7 @@
 from lib import get_params,get_discrete_values,sampleIsotropicVel,fusion_cross_section 
 import numpy as np
 from random import (random,uniform)
-import logging
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
-
+import warnings
 
 class Parameters: 
     #Inputs
@@ -171,7 +167,9 @@ class Particles(Parameters):
         del_vx = vx*self.dt
         del_vy = vy*self.dt
         path_length = np.sqrt((del_vx**2) + (del_vy**2))
-        sigma = fusion_cross_section(vx,vy,self.massIon)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            sigma = fusion_cross_section(vx,vy,self.massIon)
         probability = density*sigma*path_length*specific_weight
         return probability
     

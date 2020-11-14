@@ -15,10 +15,9 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING, format='%(name)s :: %(message)s')
 
 #Variable Inputs (for later)
-potential = -100000   # [V] cathode potential 
 cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
 anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
-Te = np.abs(potential)    #electron temperature in eV
+
 
 
 def main(params):
@@ -34,6 +33,7 @@ def main(params):
         grid_ratio = params[2]
 
     logger.info("INIT")
+    Te = np.abs(cathode_potential)    #electron temperature in eV
     fusor = Domain()
     nx,ny = nodes = fusor.get_nodes()
     cathode = fusor.build_grid(anode_radius*grid_ratio)
@@ -41,7 +41,7 @@ def main(params):
     dx = fusor.dx
     dy = fusor.dy
 
-    loop = ESPIC(cathode,anode,nodes,600,cathode_potential)
+    loop = ESPIC(cathode,anode,nodes,10,cathode_potential)
     particles = Particles(nodes)
     spray_radius,spray_angle = particles.get_spray_values()
     if params[3] is None:
@@ -56,8 +56,6 @@ def main(params):
     timeStep = loop.time_steps
 
     spec_wt = particles.get_specificWeight()
-
-    simulation = 2
 
     for step in range(0,timeStep):
         logger.info(f"""
@@ -221,6 +219,8 @@ def main(params):
             group.attrs['gridPotential'] = f'{cathode_potential/1000} kV'
             group.attrs['sprayAngle'] = f'{spray_width} radians'
             group.attrs['gridRatio'] = f'{grid_ratio}'
+    
+    print(f"Completed Simulation :: {data_set}")
             
 
 
@@ -231,13 +231,13 @@ if __name__ == '__main__':
     start = perf_counter()
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        process = executor.map(main,parameters)
+        executor.map(main,parameters)
 
-    
+
 
     end = perf_counter() 
 
-    logger.warning(f'Completed in {round(end-start)} second(s) ')
+    logger.warning(f'Completed in {round(end-start)/60} minutes(s) ')
    
 
 

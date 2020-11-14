@@ -5,6 +5,7 @@ from random import random
 import matplotlib.pyplot as plt 
 
 
+
 def get_params(section,variable,type=None):
     ''' Returns Paramenters Stored in .cfg file '''
     config = configparser.ConfigParser()

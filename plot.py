@@ -59,8 +59,6 @@ with h5py.File('data\\potential6.h5','r') as hdf:
     
     
 
-
-
 x_data = position[:,0]
 
 y_data = position[:,1]
