@@ -3,6 +3,7 @@ from lib import get_params
 import logging
 import numpy as np
 import h5py
+import concurrent.futures
 import matplotlib.pyplot as plt
 from time import perf_counter
 
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
 
 # formatter = logging.Formatter('%(name)s :: %(process)d :: %(message)s')
-logging.basicConfig(level=logging.INFO, format='%(name)s :: %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(name)s :: %(message)s')
 
 #Variable Inputs (for later)
 potential = -100000   # [V] cathode potential 
@@ -19,9 +20,18 @@ cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
 anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
 Te = np.abs(potential)    #electron temperature in eV
 
-def main(cathode_potential,grid_ratio=None,spray_width=None):
-    if grid_ratio is None:
+
+def main(params):
+    '''
+        params = (cathode_potential,data_set,grid_ratio:None,spray_with:None)
+    '''
+    cathode_potential = params[0]
+    data_set = params[1]
+
+    if params[2] is None:
         grid_ratio = cathode_radius/anode_radius #Anode radius stays fixed
+    else:
+        grid_ratio = params[2]
 
     logger.info("INIT")
     fusor = Domain()
@@ -34,8 +44,11 @@ def main(cathode_potential,grid_ratio=None,spray_width=None):
     loop = ESPIC(cathode,anode,nodes,600,cathode_potential)
     particles = Particles(nodes)
     spray_radius,spray_angle = particles.get_spray_values()
-    if spray_width is None:
+    if params[3] is None:
         spray_width = spray_angle
+    
+    else:
+        spray_width = params[3]
 
     fusion = Fusion()
     PHI_G = np.zeros(nodes)
@@ -182,7 +195,7 @@ def main(cathode_potential,grid_ratio=None,spray_width=None):
                         Total Fusion Events: {fusion.events}
                     """)
 
-    with h5py.File('data\\angletest.h5','w') as hdf:
+    with h5py.File(f'data\\potential{data_set}.h5','w') as hdf:
         G2 = hdf.create_group("DataSets/potential/")
         dataset1 = G2.create_dataset('ParticlePosition',data=particles.pos)
         dataset2 = G2.create_dataset('ParticleVelocity', data=particles.vel)
@@ -211,13 +224,20 @@ def main(cathode_potential,grid_ratio=None,spray_width=None):
             
 
 
+if __name__ == '__main__':
+
+    parameters = ((-10000,1,None,None),(-50000,2,None,None),(-70000,3,None,None),(-80000,4,None,None),(-90000,5,None,None),(-200000,6,None,None),(-50000,7,None,None),(-700000,8,None,None))
+
+    start = perf_counter()
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        process = executor.map(main,parameters)
 
     
-start = perf_counter()
-main(potential)
-end = perf_counter() 
 
-logger.info(f'Completed in {round(end-start)} second(s) ')
+    end = perf_counter() 
+
+    logger.warning(f'Completed in {round(end-start)} second(s) ')
    
 
 
