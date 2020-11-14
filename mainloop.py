@@ -182,21 +182,35 @@ def main(cathode_potential,grid_ratio=None,spray_width=None):
                         Total Fusion Events: {fusion.events}
                     """)
 
-    with h5py.File('TestData2.h5','w') as hdf:
-        G2 = hdf.create_group(f"DataSets/potential/set{simulation}")
+    with h5py.File('data\\angletest.h5','w') as hdf:
+        G2 = hdf.create_group("DataSets/potential/")
         dataset1 = G2.create_dataset('ParticlePosition',data=particles.pos)
         dataset2 = G2.create_dataset('ParticleVelocity', data=particles.vel)
-        dataset3 = G2.create_dataset('Density',data=loop.DEN)
-        dataset4 = G2.create_dataset('electricFieldx',data=loop.EFX)
-        dataset5 = G2.create_dataset('electricFieldy',data=loop.EFY)
         dataset6 = G2.create_dataset('PHI',data=PHI_G) 
+
+        G3 = hdf.create_group("DataSets/electricfield/")
+        dataset4 = G3.create_dataset('electricFieldx',data=loop.EFX)
+        dataset5 = G3.create_dataset('electricFieldy',data=loop.EFY)
+
+        G4 = hdf.create_group("DataSets/density/")
+        dataset3 = G4.create_dataset('Density',data=loop.DEN)
+
         
-        G1 = hdf.create_group(f"DataSets/potential/set{simulation}/fusion")
+        G1 = hdf.create_group(f"DataSets/fusion")
         dataset7 = G1.create_dataset('Position',data=fusion.position)
         dataset9 = G1.create_dataset('RateData',data = fusion.rate_data)
-        dataset10 = G1.create_dataset('FusionCount',data = fusion.counter)
+        dataset10 = G1.create_dataset('FusionCount',data = fusion.events)
+        
 
-        dataset6.attrs['Potential'] = f'{potential} V'
+        groups = [G1, G2, G3, G4]
+
+        for group in groups:
+            group.attrs['gridPotential'] = f'{cathode_potential/1000} kV'
+            group.attrs['sprayAngle'] = f'{spray_width} radians'
+            group.attrs['gridRatio'] = f'{grid_ratio}'
+            
+
+
 
     
 start = perf_counter()
