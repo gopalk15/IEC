@@ -41,7 +41,7 @@ def main(params):
     dx = fusor.dx
     dy = fusor.dy
 
-    loop = ESPIC(cathode,anode,nodes,10,cathode_potential)
+    loop = ESPIC(cathode,anode,nodes,600,cathode_potential)
     particles = Particles(nodes)
     spray_radius,spray_angle = particles.get_spray_values()
     if params[3] is None:
