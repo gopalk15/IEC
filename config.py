@@ -226,7 +226,8 @@ class ESPIC(Parameters):
         self.EFX[self.nx-1,:] = 2*(PHI[self.nx-2,:] - PHI[self.nx-1,:])     
         self.EFY[:,0] = 2*(PHI[:,0] - PHI[:,1])             
         self.EFY[:,self.ny-1] = 2*(PHI[:,self.ny-2] - PHI[:,self.ny-1])     
-        self.EFX = self.EFX / (dy**2)
+        self.EFX = self.EFX / (dx**2)
+        self.EFY = self.EFY/ (dy**2)
     
     def get_density(self,CHARGE,specific_weight,dh):
         self.DEN = specific_weight*Parameters.marcoCharge*CHARGE / (dh**2)
