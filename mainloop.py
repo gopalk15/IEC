@@ -226,8 +226,11 @@ def main(params):
 
 
 if __name__ == '__main__':
+        '''
+        params = (cathode_potential,data_set,grid_ratio:None,chamber_pressure:None)
+    '''
 
-    parameters = ((-10000,1,None,None),(-50000,2,None,None),(-70000,3,None,None),(-80000,4,None,None),(-90000,5,None,None),(-200000,6,None,None),(-50000,7,None,None),(-700000,8,None,None))
+    parameters = ((-100e03,1,9/10,None),(-100e03,2,10/17,None),(-100e03,3,7/10,None),(-100e03,4,0.5,None),(-100e03,5,0.1,None),(-100e03,6,1/3,None),(-100e03,7,3/4,None),(-100e03,8,3/7,None))
     start = perf_counter()
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
