@@ -38,8 +38,8 @@ def main(params):
         chamber_pressure = get_params('Chamber','Pressure')
     else:
         chamber_pressure = params[3]
-    
-    logger.info("INIT")
+
+    print(f'__init__ process:{data_set}')
     Te = np.abs(cathode_potential)    #electron temperature in eV
     fusor = Domain()
     nx,ny = nodes = fusor.get_nodes()
@@ -194,7 +194,7 @@ def main(params):
                         Total Fusion Events: {fusion.events}
                     """)
 
-    with h5py.File(f'data\\potential{data_set}.h5','w') as hdf:
+    with h5py.File(f'data\\ratio{data_set}.h5','w') as hdf:
         G2 = hdf.create_group("DataSets/potential/")
         dataset1 = G2.create_dataset('ParticlePosition',data=particles.pos)
         dataset2 = G2.create_dataset('ParticleVelocity', data=particles.vel)
@@ -230,16 +230,17 @@ if __name__ == '__main__':
     params = (cathode_potential,data_set,grid_ratio:None,chamber_pressure:None)
     '''
 
-    parameters = ((-100e03,1,9/10,None),(-100e03,2,10/17,None),
-                    (-100e03,3,7/10,None),(-100e03,4,0.5,None),
+    parameters = (
+                    (-100e03,1,0.9,None),(-100e03,2,10/17,None),
+                    (-100e03,3,0.8,None),(-100e03,4,0.5,None),
                     (-100e03,5,0.1,None),(-100e03,6,1/3,None),
-                    (-100e03,7,3/4,None),(-100e03,8,3/7,None))
+                    (-100e03,7,3/4,None),(-100e03,8,3/7,None),
+                    (-100e03,9,0.2,None),(-100e03,10,0.95,None)
+                    )
     start = perf_counter()
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         executor.map(main,parameters)
-
-    main(test_parms)
 
     end = perf_counter() 
 

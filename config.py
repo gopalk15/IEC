@@ -10,7 +10,7 @@ class Parameters:
     #Constants
     EPS0 = 8.854e-12  # Permittivity of Free Space
     QE = 1.602e-19 # Elementary Charge
-    kb = 1.3806485e-23  # [J/K]Boltzmann Constant
+    kb = 1  # [J/K]Boltzmann Constant
     AtomicMassUnit = 1.661e-27 
     massIon = 3.334e-27  # Deuterium Ion Mass 
     
