@@ -35,7 +35,7 @@ X, Y = np.meshgrid(xv, yv)
 # plt.title('Computational Domain')
 
 #open hdf5 file for reading 
-with h5py.File('data\\potentialtest1.h5','r') as hdf:
+with h5py.File('data\\ratio5.h5','r') as hdf:
     base_items = list(hdf.items())
     print(f"Items in the base directory: {base_items}")
     G1 = hdf.get('DataSets/potential/')

@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.WARNING, format='%(name)s :: %(message)s')
 #Variable Inputs (for later)
 cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
 anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
-radius = get_params('Source','sourceRadius')
+# radius = get_params('Source','sourceRadius')
 
 
 
@@ -30,7 +30,7 @@ def main(params):
     data_set = params[1]
 
     if params[2] is None:
-        grid_ratio = cathode_radius/anode_radius #Anode radius stays fixed
+        grid_ratio = anode_radius/cathode_radius #Anode radius stays fixed
     else:
         grid_ratio = params[2]
     
@@ -43,10 +43,11 @@ def main(params):
     Te = np.abs(cathode_potential)    #electron temperature in eV
     fusor = Domain()
     nx,ny = nodes = fusor.get_nodes()
-    cathode = fusor.build_grid(anode_radius*grid_ratio)
-    anode = fusor.build_grid(anode_radius)
+    cathode = fusor.build_grid(cathode_radius)
+    anode = fusor.build_grid(cathode_radius*grid_ratio)  
     dx = fusor.dx
     dy = fusor.dy
+    radius = (cathode_radius*grid_ratio) - 0.005
 
     loop = ESPIC(cathode,anode,nodes,600,cathode_potential)
     particles = Particles(nodes)
@@ -231,11 +232,11 @@ if __name__ == '__main__':
     '''
 
     parameters = (
-                    (-100e03,1,0.9,None),(-100e03,2,10/17,None),
-                    (-100e03,3,0.8,None),(-100e03,4,0.5,None),
-                    (-100e03,5,0.1,None),(-100e03,6,1/3,None),
-                    (-100e03,7,3/4,None),(-100e03,8,3/7,None),
-                    (-100e03,9,0.2,None),(-100e03,10,0.95,None)
+                    (-100e03,1,17/10,None),(-100e03,2,1.2,None),
+                    (-100e03,3,2,None),(-100e03,4,2.5,None),
+                    (-100e03,5,3,None),(-100e03,6,3.5,None),
+                    (-100e03,7,2.2,None),(-100e03,8,2.8,None),
+                    (-100e03,9,1.5,None),(-100e03,10,3.2,None)
                     )
     start = perf_counter()
 
