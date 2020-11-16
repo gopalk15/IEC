@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def get_params(section,variable,type=None):
     ''' Returns Paramenters Stored in .cfg file '''
     config = configparser.ConfigParser()
-    config.read("C:\\Users\\gopal\\git\\IEC\\simulation_parameters.cfg")
+    config.read("simulation_parameters.cfg")
     config.sections()
     value = config[section][variable]
 
@@ -25,16 +25,6 @@ def get_discrete_values(y, dy):
     actual = y / dy
     index = np.round(actual)
     return index*dy
-
-def phi_matrix(cathode,anode,cathode_potential,anode_potenial,nx,ny):
-    cathode_index = np.unique(cathode, axis=1)
-    index_offset_x = np.round(nx/2).astype(int)
-    index_offset_y = np.round(ny/2).astype(int)
-
-    PHI = np.zeros([nx,ny])
-    PHI[cat2[0] + idx, cat2[1] + idy] = cathode_potential
-    PHI[xa_index + idx, ya_index + idy] = anode_potential
-
 
 def plot_chamber(cathode,anode,chamber):
     plt.plot(cathode[0],cathode[1])
@@ -99,3 +89,21 @@ def plot_ion_density(density,chamber_radius,chamber_height):
     plt.xlabel('Radial Direction [m]')
     plt.ylabel('Height [m]')
     plt.title('Ion Number Density')
+
+def gather(Matrix,particles_position,index,chamber_height,chamber_radius,dh):
+
+    fi = (particles_position[index, 0] + chamber_radius-dh)/dh    #real i index of particle's cell
+    i = np.floor(fi).astype(int)          #integral part
+    hx = fi - i                              #the remainder
+    fj = (particles_position[index,1] + (chamber_height/2)-dh)/dh #real i index of particle's cell
+    j = np.floor(fj).astype(int)              #integral part
+    hy = fj - j 
+
+    #  Tk = Te*11604.45 #Kelvin
+    # chamber_pressure = pressure*133.322 #Pascal
+
+    rho = Matrix[i,j]*(1-hx)*(1-hy)
+    rho = rho + Matrix[i+1,j]*hx*(1-hy)
+    rho = rho + Matrix[i,j+1]*(1-hx)*hy
+    rho = rho + Matrix[i+1,j+1]*hx*hy
+    return rho

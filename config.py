@@ -1,6 +1,6 @@
 from lib import get_params,get_discrete_values,sampleIsotropicVel,fusion_cross_section 
 import numpy as np
-from random import (random,uniform)
+from random import uniform
 import warnings
 
 class Parameters: 
@@ -10,11 +10,12 @@ class Parameters:
     #Constants
     EPS0 = 8.854e-12  # Permittivity of Free Space
     QE = 1.602e-19 # Elementary Charge
-    kb = 1  # Boltzmann Constant
+    kb = 1.3806485e-23  # [J/K]Boltzmann Constant
     AtomicMassUnit = 1.661e-27 
     massIon = 3.334e-27  # Deuterium Ion Mass 
-    Flux = 4.6e20 # Flux of ions entering [ions per second]
+    
     marcoCharge = 1 #macroparticle charge
+    deturonDiameter = 2.1413e-15
 
 
     # Physical Grid Dimensions
@@ -25,10 +26,10 @@ class Parameters:
     chamber_radius = get_params('Chamber','Radius')      # [m]
     chamber_height = get_params('Chamber', 'Height')     # [m]
     wire_radius = get_params('Chamber','wireRadius')/2 # Radius of 20 guage wire in m
-    chamber_pressure = get_params('Chamber','Pressure') #[Pa]
+    chamber_pressure = get_params('Chamber','Pressure') # [Torr]
 
     #Source Dimension
-    source_radius = get_params('Source','R')
+    source_radius = get_params('Source','sourceRadius')
 
     #input settings
     n0 = 4.6e13                 #electron background self.DENsity in #/m^3
@@ -104,8 +105,9 @@ class Particles(Parameters):
         self.vel = np.zeros([Parameters.max_particles,2])
         self.insert = 600 #insert 2 ions per anode cell
     
-    def get_specificWeight(self):
-        specific_weight = (Parameters.Flux*Parameters.dt)/self.insert
+    def get_specificWeight(self,cathode_potential):
+        Flux = 1.6e21*np.abs(cathode_potential)/100000 # Flux of ions entering [ions per second]
+        specific_weight = (Flux*self.dt)/self.insert
         return specific_weight
     
     def get_spray_values(self):
@@ -115,7 +117,7 @@ class Particles(Parameters):
 
         return (radius,angle)
 
-    def generate(self,radius,angle):
+    def generate(self,radius):
 
        # largest angle == pi/7
         
@@ -141,11 +143,9 @@ class Particles(Parameters):
         # self.vel[self.count:self.count+self.insert,1] = (-1.5 + pt11 + pt12 + pt13)*self.vth  # y velcoity
 
         for i in range(self.insert):
-            theta = uniform(-angle,angle) - np.pi/2
-            distance = uniform(0.1,0.4)
-            
-            self.pos[i + self.count,0] = distance*np.cos(theta)
-            self.pos[i + self.count,1] = distance*np.sin(theta) + (self.chamber_height/2 - 0.01)
+            theta = np.random.rand(1)*2*np.pi
+            self.pos[i + self.count,0] = radius*np.cos(theta)
+            self.pos[i + self.count,1] = radius*np.sin(theta) 
             self.vel[i + self.count,0],self.vel[i+self.count,1] = sampleIsotropicVel(self.vth)
 
         self.count += self.insert
@@ -164,9 +164,9 @@ class Particles(Parameters):
     def get_fusion_prob(self,index,density,specific_weight):
         vx = self.vel[index,0]
         vy = self.vel[index,1]
-        del_vx = vx*self.dt
-        del_vy = vy*self.dt
-        path_length = np.sqrt((del_vx**2) + (del_vy**2))
+        del_vx = vx*self.dt*1e4 
+        del_vy = vy*self.dt*1e4
+        path_length = np.sqrt((del_vx**2)+(del_vy**2))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             sigma = fusion_cross_section(vx,vy,self.massIon)

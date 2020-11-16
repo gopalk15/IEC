@@ -12,17 +12,19 @@ logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
 
 # formatter = logging.Formatter('%(name)s :: %(process)d :: %(message)s')
-logging.basicConfig(level=logging.WARNING, format='%(name)s :: %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(name)s :: %(message)s')
 
 #Variable Inputs (for later)
 cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
 anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
+radius = get_params('Source','sourceRadius')
+
 
 
 
 def main(params):
     '''
-        params = (cathode_potential,data_set,grid_ratio:None,spray_with:None)
+        params = (cathode_potential,data_set,grid_ratio:None,chamber_pressure:None)
     '''
     cathode_potential = params[0]
     data_set = params[1]
@@ -31,7 +33,12 @@ def main(params):
         grid_ratio = cathode_radius/anode_radius #Anode radius stays fixed
     else:
         grid_ratio = params[2]
-
+    
+    if params[3] is None:
+        chamber_pressure = get_params('Chamber','Pressure')
+    else:
+        chamber_pressure = params[3]
+    
     logger.info("INIT")
     Te = np.abs(cathode_potential)    #electron temperature in eV
     fusor = Domain()
@@ -43,19 +50,13 @@ def main(params):
 
     loop = ESPIC(cathode,anode,nodes,600,cathode_potential)
     particles = Particles(nodes)
-    spray_radius,spray_angle = particles.get_spray_values()
-    if params[3] is None:
-        spray_width = spray_angle
-    
-    else:
-        spray_width = params[3]
 
     fusion = Fusion()
     PHI_G = np.zeros(nodes)
     loop.build_potential_matrix(PHI_G)
     timeStep = loop.time_steps
 
-    spec_wt = particles.get_specificWeight()
+    spec_wt = particles.get_specificWeight(cathode_potential)
 
     for step in range(0,timeStep):
         logger.info(f"""
@@ -103,7 +104,7 @@ def main(params):
         
         ''' 4. Generate Particles '''
         logger.info('Injecting Particles')
-        particles.generate(spray_radius,spray_angle)
+        particles.generate(radius)
 
     
         ''' 5. Move Particles '''
@@ -127,7 +128,7 @@ def main(params):
         
             rho = loop.gather_density(i,j,hx,hy)
             fusion_prob = particles.get_fusion_prob(m,rho,spec_wt)
-            fusion_chance = np.random.rand(1)*fusion_prob
+            fusion_chance = np.random.rand(1)
             logging.debug(f"Fusion Probability: {fusion_prob}")
             logging.debug(f"Fusion Chance: {fusion_chance}")
             radial_distance = np.sqrt(particles.pos[m,0]**2 + particles.pos[m,1]**2)
@@ -174,7 +175,7 @@ def main(params):
                     fusor.cathode_counter += 1
             
             #Check Fusion
-            elif fusion_chance[0] >= fusion_prob:
+            elif fusion_chance[0] <= fusion_prob:
                 fuse_position = particles.pos[[m]]
                 fusion.occured(fuse_position[0])
                 particles.kill(m)
@@ -211,13 +212,13 @@ def main(params):
         dataset7 = G1.create_dataset('Position',data=fusion.position)
         dataset9 = G1.create_dataset('RateData',data = fusion.rate_data)
         dataset10 = G1.create_dataset('FusionCount',data = fusion.events)
-        
+        dataset11 = G1.create_dataset('ChamberPressure', data=chamber_pressure)
+        dataset11.attrs['units'] = 'torr'
 
         groups = [G1, G2, G3, G4]
 
         for group in groups:
             group.attrs['gridPotential'] = f'{cathode_potential/1000} kV'
-            group.attrs['sprayAngle'] = f'{spray_width} radians'
             group.attrs['gridRatio'] = f'{grid_ratio}'
     
     print(f"Completed Simulation :: {data_set}")
@@ -227,13 +228,13 @@ def main(params):
 if __name__ == '__main__':
 
     parameters = ((-10000,1,None,None),(-50000,2,None,None),(-70000,3,None,None),(-80000,4,None,None),(-90000,5,None,None),(-200000,6,None,None),(-50000,7,None,None),(-700000,8,None,None))
-
+    test_parms = (-50e03,'test1',None,None)
     start = perf_counter()
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.map(main,parameters)
+    # with concurrent.futures.ProcessPoolExecutor() as executor:
+    #     executor.map(main,parameters)
 
-
+    main(test_parms)
 
     end = perf_counter() 
 

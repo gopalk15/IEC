@@ -1,6 +1,5 @@
 import sys
-sys.path.insert(1,'C:\\Users\\gopal\\git\\IEC')
-
+sys.path.insert(1,'C:\\Users\\ellen\\git\\IEC')
 from config import Domain,Particles 
 import numpy as np
 from lib import get_params,plot_chamber
@@ -11,6 +10,7 @@ import matplotlib.pyplot as plt
 potential = -100000   # [V] cathode potential 
 cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
 anode_radius = get_params('Grid','Anode_Radius')  # Anode [m]
+radius = get_params('Source','sourceRadius') - 0.2
 pressure = 7      # Pa (Not used yet)
 Te = np.abs(potential)    #electron temperature in eV
 
@@ -49,9 +49,9 @@ plt.title('Computational Domain')
 
 particles = Particles(nodes)
 
-radius,angle = particles.get_spray_values()
+spray_radius,angle = particles.get_spray_values()
 
-particles.generate(radius,np.pi/6)
+particles.generate(radius)
 
 x_part = particles.pos[:,0]
 y_part = particles.pos[:,1]
