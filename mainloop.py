@@ -228,11 +228,10 @@ def main(params):
 if __name__ == '__main__':
 
     parameters = ((-10000,1,None,None),(-50000,2,None,None),(-70000,3,None,None),(-80000,4,None,None),(-90000,5,None,None),(-200000,6,None,None),(-50000,7,None,None),(-700000,8,None,None))
-    test_parms = (-50e03,'test1',None,None)
     start = perf_counter()
 
-    # with concurrent.futures.ProcessPoolExecutor() as executor:
-    #     executor.map(main,parameters)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.map(main,parameters)
 
     main(test_parms)
 
