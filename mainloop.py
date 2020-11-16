@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
 
 # formatter = logging.Formatter('%(name)s :: %(process)d :: %(message)s')
-logging.basicConfig(level=logging.DEBUG, format='%(name)s :: %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(name)s :: %(message)s')
 
 #Variable Inputs (for later)
 cathode_radius = get_params('Grid','Cathode_Radius') # Cathode [m]
@@ -226,11 +226,14 @@ def main(params):
 
 
 if __name__ == '__main__':
-        '''
-        params = (cathode_potential,data_set,grid_ratio:None,chamber_pressure:None)
+    '''
+    params = (cathode_potential,data_set,grid_ratio:None,chamber_pressure:None)
     '''
 
-    parameters = ((-100e03,1,9/10,None),(-100e03,2,10/17,None),(-100e03,3,7/10,None),(-100e03,4,0.5,None),(-100e03,5,0.1,None),(-100e03,6,1/3,None),(-100e03,7,3/4,None),(-100e03,8,3/7,None))
+    parameters = ((-100e03,1,9/10,None),(-100e03,2,10/17,None),
+                    (-100e03,3,7/10,None),(-100e03,4,0.5,None),
+                    (-100e03,5,0.1,None),(-100e03,6,1/3,None),
+                    (-100e03,7,3/4,None),(-100e03,8,3/7,None))
     start = perf_counter()
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
