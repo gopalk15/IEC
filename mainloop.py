@@ -30,7 +30,7 @@ def main(params):
     data_set = params[1]
 
     if params[2] is None:
-        grid_ratio = anode_radius/cathode_radius #Anode radius stays fixed
+        grid_ratio = cathode_radius/anode_radius #Anode radius stays fixed
     else:
         grid_ratio = params[2]
     
@@ -43,8 +43,8 @@ def main(params):
     Te = np.abs(cathode_potential)    #electron temperature in eV
     fusor = Domain()
     nx,ny = nodes = fusor.get_nodes()
-    cathode = fusor.build_grid(cathode_radius)
-    anode = fusor.build_grid(cathode_radius*grid_ratio)  
+    cathode = fusor.build_grid(anode_radius*grid_ratio)
+    anode = fusor.build_grid(anode_radius)  
     dx = fusor.dx
     dy = fusor.dy
     radius = (cathode_radius*grid_ratio) - 0.005
@@ -195,7 +195,7 @@ def main(params):
                         Total Fusion Events: {fusion.events}
                     """)
 
-    with h5py.File(f'data\\ratio{data_set}.h5','w') as hdf:
+    with h5py.File(f'data\\potential{data_set}.h5','w') as hdf:
         G2 = hdf.create_group("DataSets/potential/")
         dataset1 = G2.create_dataset('ParticlePosition',data=particles.pos)
         dataset2 = G2.create_dataset('ParticleVelocity', data=particles.vel)
@@ -232,11 +232,11 @@ if __name__ == '__main__':
     '''
 
     parameters = (
-                    (-100e03,1,17/10,None),(-100e03,2,1.2,None),
-                    (-100e03,3,2,None),(-100e03,4,2.5,None),
-                    (-100e03,5,3,None),(-100e03,6,3.5,None),
-                    (-100e03,7,2.2,None),(-100e03,8,2.8,None),
-                    (-100e03,9,1.5,None),(-100e03,10,3.2,None)
+                    (-80e03,1,None,None),(-90e03,2,None,None),
+                    (-100e03,3,None,None),(-110e03,4,None,None),
+                    (-120e03,5,None,None),(-130e03,6,None,None),
+                    (-140e03,7,None,None),(-150e03,8,None,None),
+                    (-160e03,9,None,None),(-170e03,10,None,None)
                     )
     start = perf_counter()
 
