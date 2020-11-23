@@ -34,8 +34,13 @@ X, Y = np.meshgrid(xv, yv)
 # plt.ylabel('Height [m]')
 # plt.title('Computational Domain')
 
+
+simulation_file = 'radius'
+data_set = 1
+
+
 #open hdf5 file for reading 
-with h5py.File('data\\ratio5.h5','r') as hdf:
+with h5py.File(f"data\\{simulation_file}{data_set}.h5",'r') as hdf:
     base_items = list(hdf.items())
     print(f"Items in the base directory: {base_items}")
     G1 = hdf.get('DataSets/potential/')
