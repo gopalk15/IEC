@@ -232,11 +232,11 @@ if __name__ == '__main__':
     '''
 
     parameters = (
-                    (-80e03,1,None,None),(-90e03,2,None,None),
-                    (-100e03,3,None,None),(-110e03,4,None,None),
-                    (-120e03,5,None,None),(-130e03,6,None,None),
-                    (-140e03,7,None,None),(-150e03,8,None,None),
-                    (-160e03,9,None,None),(-170e03,10,None,None)
+                    (-100e03,11,0.3529,None),(-100e03,12,0.4118,None),
+                    (-100e03,13,0.5294,None),(-100e03,14,0.6471,None),
+                    (-100e03,15,0.7059,None),(-100e03,16,0.0941,None),
+                    (-100e03,17,0.0824,None),(-100e03,18,0.2941,None),
+                    (-100e03,19,0.2706,None),(-100e03,20,0.0882,None)
                     )
     start = perf_counter()
 
