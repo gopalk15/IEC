@@ -195,7 +195,7 @@ def main(params):
                         Total Fusion Events: {fusion.events}
                     """)
 
-    with h5py.File(f'data\\potential{data_set}.h5','w') as hdf:
+    with h5py.File(f'data\\ratio{data_set}.h5','w') as hdf:
         G2 = hdf.create_group("DataSets/potential/")
         dataset1 = G2.create_dataset('ParticlePosition',data=particles.pos)
         dataset2 = G2.create_dataset('ParticleVelocity', data=particles.vel)
